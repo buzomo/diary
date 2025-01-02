@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>年間一行日記</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📔</text></svg>">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 100px;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 40px;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 100px;
+        }
+
+        .saturday {
+            background-color: #e6f3ff;
+        }
+
+        .sunday {
+            background-color: #ffe6f2;
+        }
+
+        .holiday {
+            background-color: #ffe6e6;
+        }
+
+        .editable {
+            min-width: 200px;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #yearControl {
+            display: flex;
+            align-items: center;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            padding: 5px;
+        }
+
+        #yearControl button {
+            background-color: transparent;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        #currentYear {
+            font-size: 18px;
+            margin: 0 10px;
+        }
+
+        @media screen and (max-width: 600px) {
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            tr {
+                margin-bottom: 15px;
+            }
+
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+            }
+
+            td:before {
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+            }
+
+            td:nth-of-type(1):before {
+                content: "日付";
+            }
+
+            td:nth-of-type(2):before {
+                content: "曜日";
+            }
+
+            td:nth-of-type(3):before {
+                content: "祝祭日";
+            }
+
+            td:nth-of-type(4):before {
+                content: "内容";
+            }
+        }
+
+        th {
+            text-align: center;
+        }
+
+        td:nth-child(1),
+        td:nth-child(2),
+        td:nth-child(3) {
+            text-align: center;
+        }
+
+        #currentYear {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body onkeydown="handleKeyPress(event)">
+    <div id="controls">
+        <div id="yearControl">
+            <button id="prevYear">◀</button>
+            <span id="currentYear">2025</span>
+            <button id="nextYear">▶</button>
+        </div>
+    </div>
+
+    <table id="diaryTable">
+        <thead>
+            <tr>
+                <th>日付</th>
+                <th>曜日</th>
+                <th>祝祭日</th>
+                <th>内容</th>
+            </tr>
+        </thead>
+        <tbody id="diaryBody">
+            <!-- ここは元々は空 or 初期状態のまま。JSで日付を追加描画する -->
+        </tbody>
+    </table>
+    <script id="backupData" type="application/json">{}</script>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === 'e' || event.key === 'E') {
+                window.location.href = 'https://github.com/buzomo/toh-diary/edit/main/index.html';
+            } else if (event.key === '.' || event.key === 's') {
+                window.location.href = 'https://vercel.com/buzomos-projects/toh-diary/deployments';
+            }
+        }
+
+        /* 祝日などの配列（省略） */
+        const holidays = [
+            { date: "2023-01-01", name: "元旦" },
+            { date: "2023-01-09", name: "成人の日" },
+            { date: "2023-02-11", name: "建国記念の日" },
+            { date: "2023-02-23", name: "天皇誕生日" },
+            { date: "2023-03-21", name: "春分の日" },
+            { date: "2023-04-29", name: "昭和の日" },
+            { date: "2023-05-03", name: "憲法記念日" },
+            { date: "2023-05-04", name: "みどりの日" },
+            { date: "2023-05-05", name: "こどもの日" },
+            { date: "2023-07-17", name: "海の日" },
+            { date: "2023-08-11", name: "山の日" },
+            { date: "2023-09-18", name: "敬老の日" },
+            { date: "2023-09-23", name: "秋分の日" },
+            { date: "2023-10-09", name: "スポーツの日" },
+            { date: "2023-11-03", name: "文化の日" },
+            { date: "2023-11-23", name: "勤労感謝の日" },
+            { date: "2024-01-01", name: "元旦" },
+            { date: "2024-01-08", name: "成人の日" },
+            { date: "2024-02-11", name: "建国記念の日" },
+            { date: "2024-02-12", name: "振替休日" },
+            { date: "2024-02-23", name: "天皇誕生日" },
+            { date: "2024-03-20", name: "春分の日" },
+            { date: "2024-04-29", name: "昭和の日" },
+            { date: "2024-05-03", name: "憲法記念日" },
+            { date: "2024-05-04", name: "みどりの日" },
+            { date: "2024-05-05", name: "こどもの日" },
+            { date: "2024-05-06", name: "振替休日" },
+            { date: "2024-07-15", name: "海の日" },
+            { date: "2024-08-11", name: "山の日" },
+            { date: "2024-08-12", name: "振替休日" },
+            { date: "2024-09-16", name: "敬老の日" },
+            { date: "2024-09-22", name: "秋分の日" },
+            { date: "2024-09-23", name: "振替休日" },
+            { date: "2024-10-14", name: "スポーツの日" },
+            { date: "2024-11-03", name: "文化の日" },
+            { date: "2024-11-04", name: "振替休日" },
+            { date: "2024-11-23", name: "勤労感謝の日" },
+            { date: "2024-12-28", name: "年末年始休暇" },
+            { date: "2024-12-29", name: "年末年始休暇" },
+            { date: "2024-12-30", name: "年末年始休暇" },
+            { date: "2024-12-31", name: "年末年始休暇" },
+            { date: "2025-01-01", name: "元日" },
+            { date: "2025-01-02", name: "年末年始休暇" },
+            { date: "2025-01-03", name: "年末年始休暇" },
+            { date: "2025-01-04", name: "年末年始休暇" },
+            { date: "2025-01-05", name: "年末年始休暇" },
+            { date: "2025-01-13", name: "成人の日" },
+            { date: "2025-02-11", name: "建国記念の日" },
+            { date: "2025-02-23", name: "天皇誕生日" },
+            { date: "2025-02-24", name: "振替休日" },
+            { date: "2025-03-20", name: "春分の日" },
+            { date: "2025-04-29", name: "昭和の日" },
+            { date: "2025-05-03", name: "憲法記念日" },
+            { date: "2025-05-04", name: "みどりの日" },
+            { date: "2025-05-05", name: "こどもの日" },
+            { date: "2025-05-06", name: "振替休日" },
+            { date: "2025-07-21", name: "海の日" },
+            { date: "2025-08-11", name: "山の日" },
+            { date: "2025-09-15", name: "敬老の日" },
+            { date: "2025-09-23", name: "秋分の日" },
+            { date: "2025-10-13", name: "スポーツの日" },
+            { date: "2025-11-03", name: "文化の日" },
+            { date: "2025-11-23", name: "勤労感謝の日" },
+            { date: "2025-11-24", name: "振替休日" },
+            { date: "2025-12-29", name: "年末年始休暇" },
+            { date: "2025-12-30", name: "年末年始休暇" },
+            { date: "2025-12-31", name: "年末年始休暇" },
+            { date: "2026-01-01", name: "元日" },
+            { date: "2026-01-02", name: "年末年始休暇" },
+            { date: "2026-01-03", name: "年末年始休暇" },
+            { date: "2026-01-04", name: "年末年始休暇" },
+            { date: "2026-01-12", name: "成人の日" },
+            { date: "2026-01-01", name: "元日" },
+            { date: "2026-01-12", name: "成人の日" },
+            { date: "2026-02-11", name: "建国記念の日" },
+            { date: "2026-02-23", name: "天皇誕生日" },
+            { date: "2026-03-20", name: "春分の日" },
+            { date: "2026-04-29", name: "昭和の日" },
+            { date: "2026-05-03", name: "憲法記念日" },
+            { date: "2026-05-04", name: "みどりの日" },
+            { date: "2026-05-05", name: "こどもの日" },
+            { date: "2026-05-06", name: "振替休日" },
+            { date: "2026-07-20", name: "海の日" },
+            { date: "2026-08-11", name: "山の日" },
+            { date: "2026-09-21", name: "敬老の日" },
+            { date: "2026-09-22", name: "国民の休日" },
+            { date: "2026-09-23", name: "秋分の日" },
+            { date: "2026-10-12", name: "スポーツの日" },
+            { date: "2026-11-03", name: "文化の日" },
+            { date: "2026-11-23", name: "勤労感謝の日" },
+            { date: "2027-01-01", name: "元日" },
+            { date: "2027-01-11", name: "成人の日" },
+            { date: "2027-02-11", name: "建国記念の日" },
+            { date: "2027-02-23", name: "天皇誕生日" },
+            { date: "2027-03-21", name: "春分の日" },
+            { date: "2027-03-22", name: "振替休日" },
+            { date: "2027-04-29", name: "昭和の日" },
+            { date: "2027-05-03", name: "憲法記念日" },
+            { date: "2027-05-04", name: "みどりの日" },
+            { date: "2027-05-05", name: "こどもの日" },
+            { date: "2027-07-19", name: "海の日" },
+            { date: "2027-08-11", name: "山の日" },
+            { date: "2027-09-20", name: "敬老の日" },
+            { date: "2027-09-23", name: "秋分の日" },
+            { date: "2027-10-11", name: "スポーツの日" },
+            { date: "2027-11-03", name: "文化の日" },
+            { date: "2027-11-23", name: "勤労感謝の日" },
+            { date: "2028-01-01", name: "元日" },
+            { date: "2028-01-10", name: "成人の日" },
+            { date: "2028-02-11", name: "建国記念の日" },
+            { date: "2028-02-23", name: "天皇誕生日" },
+            { date: "2028-03-20", name: "春分の日" },
+            { date: "2028-04-29", name: "昭和の日" },
+            { date: "2028-05-03", name: "憲法記念日" },
+            { date: "2028-05-04", name: "みどりの日" },
+            { date: "2028-05-05", name: "こどもの日" },
+            { date: "2028-07-17", name: "海の日" },
+            { date: "2028-08-11", name: "山の日" },
+            { date: "2028-09-18", name: "敬老の日" },
+            { date: "2028-09-22", name: "秋分の日" },
+            { date: "2028-10-09", name: "スポーツの日" },
+            { date: "2028-11-03", name: "文化の日" },
+            { date: "2028-11-23", name: "勤労感謝の日" },
+            { date: "2029-01-01", name: "元日" },
+            { date: "2029-01-08", name: "成人の日" },
+            { date: "2029-02-11", name: "建国記念の日" },
+            { date: "2029-02-12", name: "振替休日" },
+            { date: "2029-02-23", name: "天皇誕生日" },
+            { date: "2029-03-20", name: "春分の日" },
+            { date: "2029-04-29", name: "昭和の日" },
+            { date: "2029-04-30", name: "振替休日" },
+            { date: "2029-05-03", name: "憲法記念日" },
+            { date: "2029-05-04", name: "みどりの日" },
+            { date: "2029-05-05", name: "こどもの日" },
+            { date: "2029-07-16", name: "海の日" },
+            { date: "2029-08-11", name: "山の日" },
+            { date: "2029-09-17", name: "敬老の日" },
+            { date: "2029-09-23", name: "秋分の日" },
+            { date: "2029-09-24", name: "振替休日" },
+            { date: "2029-10-08", name: "スポーツの日" },
+            { date: "2029-11-03", name: "文化の日" },
+            { date: "2029-11-23", name: "勤労感謝の日" },
+            { date: "2030-01-01", name: "元日" },
+            { date: "2030-01-14", name: "成人の日" },
+            { date: "2030-02-11", name: "建国記念の日" },
+            { date: "2030-02-23", name: "天皇誕生日" },
+            { date: "2030-03-20", name: "春分の日" },
+            { date: "2030-04-29", name: "昭和の日" },
+            { date: "2030-05-03", name: "憲法記念日" },
+            { date: "2030-05-04", name: "みどりの日" },
+            { date: "2030-05-05", name: "こどもの日" },
+            { date: "2030-05-06", name: "振替休日" },
+            { date: "2030-07-15", name: "海の日" },
+            { date: "2030-08-11", name: "山の日" },
+            { date: "2030-08-12", name: "振替休日" },
+            { date: "2030-09-16", name: "敬老の日" },
+            { date: "2030-09-23", name: "秋分の日" },
+            { date: "2030-10-14", name: "スポーツの日" },
+            { date: "2030-11-03", name: "文化の日" },
+            { date: "2030-11-04", name: "振替休日" },
+            { date: "2030-11-23", name: "勤労感謝の日" }
+        ];
+
+        let entrydata = {};  // 各日付の「内容」を保存する
+
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+
+        function loadFromHTML() {
+            // HTML埋め込みのJSONをパース
+            const backupTag = document.getElementById('backupData');
+            if (backupTag) {
+                try {
+                    const parsed = JSON.parse(backupTag.textContent);
+                    // すでにローカル保存が無ければ、HTMLから読み込む
+                    if (!localStorage.getItem('diaryData')) {
+                        entrydata = parsed;
+                        saveToLocalStorage();
+                    }
+                } catch (e) {
+                    console.error('HTML埋め込みデータのパースに失敗', e);
+                }
+            }
+        }
+
+
+        // ▼追加: オリジナルの状態を退避（空の <tbody> ならそのまま空文字を保存）
+        const originalTbodyHTML = document.getElementById('diaryBody').innerHTML;
+
+        /* LocalStorageから既存データを読み込み */
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('diaryData');
+            if (savedData) {
+                entrydata = JSON.parse(savedData);
+            }
+        }
+
+        /* LocalStorageにデータを書き込み */
+        function saveToLocalStorage() {
+            localStorage.setItem('diaryData', JSON.stringify(entrydata));
+        }
+
+        /* 指定年のカレンダーを描画 */
+        function loadYear(year) {
+            currentYear = year;
+            document.getElementById('currentYear').textContent = year;
+            const table = document.getElementById('diaryBody');
+            table.innerHTML = ''; // 一旦クリア
+
+            const startDate = new Date(year, 0, 1);
+            const endDate = new Date(year, 11, 31);
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const row = table.insertRow();
+                const dateCell = row.insertCell(0);
+                const dayCell = row.insertCell(1);
+                const holidayCell = row.insertCell(2);
+                const contentCell = row.insertCell(3);
+
+                const formattedDate = `${d.getFullYear()}-${(d.getMonth() + 1)
+                    .toString().padStart(2, '0')}-${d.getDate()
+                        .toString().padStart(2, '0')}`;
+                dateCell.textContent = formattedDate;
+                dayCell.textContent = dayNames[d.getDay()];
+
+                contentCell.className = 'editable';
+                contentCell.contentEditable = true;
+                // 既に保存されている内容があれば表示
+                contentCell.textContent = entrydata[formattedDate] || '';
+
+                if (d.getDay() === 0) {
+                    row.classList.add('sunday');
+                } else if (d.getDay() === 6) {
+                    row.classList.add('saturday');
+                }
+
+                const holiday = holidays.find(h => h.date === formattedDate);
+                if (holiday) {
+                    row.classList.add('holiday');
+                    holidayCell.textContent = holiday.name;
+                }
+            }
+        }
+
+        document.getElementById('prevYear').addEventListener('click', function () {
+            loadYear(currentYear - 1);
+        });
+        document.getElementById('nextYear').addEventListener('click', function () {
+            loadYear(currentYear + 1);
+        });
+
+        /* 「内容」セルが編集されたら entrydata に反映 */
+        document.getElementById('diaryBody').addEventListener('input', function (e) {
+            if (e.target.className === 'editable') {
+                const row = e.target.parentElement;
+                const date = row.cells[0].textContent; // 日付
+                const content = e.target.textContent;
+                entrydata[date] = content;
+                saveToLocalStorage();
+            }
+        });
+
+        /*
+          Ctrl+S キーを押したときに、
+          1) diaryBody を元のHTMLに戻す（=描画前の素の状態）
+          2) 既に entrydata に内容は格納されているので、
+             そのまま全体を outerHTML で書き出し
+        */
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveHTML();
+            }
+        });
+
+        function saveHTML() {
+            // まず entrydata を JSON化し、HTML内に埋め込む
+            const dataTag = document.getElementById('backupData');
+            dataTag.textContent = JSON.stringify(entrydata);
+
+            // diaryBody を一旦「初期状態」に戻すならここで実行
+            document.getElementById('diaryBody').innerHTML = ""
+
+            // HTML全体を取得して Blob として保存
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'diary.html';
+            a.click();
+            loadYear(currentYear);
+
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // ローカルストレージ読み込み
+            loadFromLocalStorage();
+            // HTMLに埋め込まれたデータを取り込み(ローカルストレージが空であれば上書き)
+            loadFromHTML();
+            // 以降テーブル描画など
+            loadYear(currentYear);
+        });
+        document.addEventListener('keydown', handleKeyPress);
+
+    </script>
+</body>
+
+</html>
