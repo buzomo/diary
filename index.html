@@ -166,6 +166,36 @@
         <span class="day-toggle active" data-day="6">土</span>
       </div>
       <input type="text" id="searchInput" placeholder="キーワード検索" />
+      <div id="frequentWords">
+        <button onclick="filterByWord('買')">買</button>
+        <button onclick="filterByWord('見')">見</button>
+        <button onclick="filterByWord('食')">食</button>
+        <button onclick="filterByWord('電')">電</button>
+        <button onclick="filterByWord('購')">購</button>
+        <button onclick="filterByWord('歩')">歩</button>
+        <button onclick="filterByWord('体')">体</button>
+        <button onclick="filterByWord('話')">話</button>
+        <button onclick="filterByWord('読')">読</button>
+        <button onclick="filterByWord('仕')">仕</button>
+        <button onclick="filterByWord('調')">調</button>
+        <button onclick="filterByWord('美')">美</button>
+        <button onclick="filterByWord('職')">職</button>
+        <button onclick="filterByWord('近')">近</button>
+        <button onclick="filterByWord('外')">外</button>
+        <button onclick="filterByWord('♨')">♨</button>
+        <button onclick="filterByWord('早')">早</button>
+        <button onclick="filterByWord('聞')">聞</button>
+        <button onclick="filterByWord('眠')">眠</button>
+        <button onclick="filterByWord('在')">在</button>
+        <button onclick="filterByWord('認')">認</button>
+        <button onclick="filterByWord('再')">再</button>
+        <button onclick="filterByWord('風')">風</button>
+        <button onclick="filterByWord('冷')">冷</button>
+        <button onclick="filterByWord('冴')">冴</button>
+        <button onclick="filterByWord('労')">労</button>
+        <button onclick="filterByWord('寒')">寒</button>
+        <button onclick="filterByWord('🍲')">🍲</button>
+      </div>
     </div>
 
     <table id="diaryTable">
@@ -629,6 +659,58 @@
       let currentDate = new Date();
       let currentYear = currentDate.getFullYear();
       let activeDays = new Set([0, 1, 2, 3, 4, 5, 6]);
+      const searchInput = document.getElementById("searchInput");
+      const yearControl = document.getElementById("yearControl");
+      const diaryBody = document.getElementById("diaryBody");
+
+      // 検索ボックスの変更を監視
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim();
+        filterDiary(query);
+        toggleYearControl(query);
+      });
+
+      // ボタンでフィルタリングしたときの処理
+      function filterByWord(word) {
+        searchInput.value = word; // 検索ボックスに表示
+        filterDiary(word);
+      }
+
+      // 日記をフィルタリングする処理
+      function filterDiary(query) {
+        const tableRows = diaryBody.querySelectorAll("tr");
+        tableRows.forEach((row) => {
+          if (row.textContent.includes(query)) {
+            row.style.display = "";
+            highlightText(row, query); // ハイライト処理
+          } else {
+            row.style.display = "none";
+          }
+        });
+      }
+
+      // ハイライト処理
+      function highlightText(row, query) {
+        const contentCells = row.querySelectorAll("td");
+        contentCells.forEach((cell) => {
+          const regex = new RegExp(`(${query})`, "gi");
+          cell.innerHTML = cell.textContent.replace(
+            regex,
+            `<span class="highlight">$1</span>`
+          );
+        });
+      }
+
+      // ハイライトをクリアする処理
+      function clearHighlights() {
+        const tableRows = diaryBody.querySelectorAll("tr");
+        tableRows.forEach((row) => {
+          const contentCells = row.querySelectorAll("td");
+          contentCells.forEach((cell) => {
+            cell.innerHTML = cell.textContent; // 元に戻す
+          });
+        });
+      }
 
       function loadFromHTML() {
         const backupTag = document.getElementById("backupData");
@@ -654,12 +736,6 @@
 
       function saveToLocalStorage() {
         localStorage.setItem("diaryData", JSON.stringify(entrydata));
-      }
-
-      function highlightText(text, searchTerm) {
-        if (!searchTerm) return text;
-        const regex = new RegExp(`(${searchTerm})`, "gi");
-        return text.replace(regex, '<span class="highlight">$1</span>');
       }
 
       function filterTable() {
