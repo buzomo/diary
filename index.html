@@ -717,10 +717,13 @@
         if (backupTag) {
           try {
             const parsed = JSON.parse(backupTag.textContent);
-            if (!localStorage.getItem("diaryData")) {
-              entrydata = parsed;
-              saveToLocalStorage();
+            // LocalStorageのデータとHTMLのデータを統合
+            for (let key in parsed) {
+              if (!entrydata[key] || entrydata[key] === "") {
+                entrydata[key] = parsed[key];
+              }
             }
+            saveToLocalStorage();
           } catch (e) {
             console.error("HTML埋め込みデータのパースに失敗", e);
           }
