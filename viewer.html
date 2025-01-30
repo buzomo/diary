@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4K日記ビューア</title>
+    <style>
+      :root {
+        --column-gap: 1.5vw;
+        --card-min-width: 380px;
+        --timeline-width: 240px;
+        --metadata-width: 280px;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f5f5f7;
+        color: #1d1d1f;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        overflow-x: hidden;
+      }
+
+      .container {
+        display: grid;
+        grid-template-columns: [timeline-start] var(--timeline-width) [main-start] calc(
+            100vw - var(--timeline-width) - var(--metadata-width) - 3vw
+          ) [metadata-start] var(--metadata-width) [end];
+        gap: var(--column-gap);
+        min-height: 100vh;
+        padding: 2vh 1.5vw;
+      }
+
+      .timeline-nav {
+        position: sticky;
+        top: 2vh;
+        height: 96vh;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .diary-grid {
+        display: grid;
+        grid-template-columns: repeat(
+          auto-fill,
+          minmax(var(--card-min-width), 1fr)
+        );
+        grid-auto-rows: min-content;
+        gap: 1.2rem;
+        padding-right: 1vw;
+      }
+
+      .diary-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 14px;
+        padding: 1.8rem;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        break-inside: avoid;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+      }
+
+      .metadata-panel {
+        position: sticky;
+        top: 2vh;
+        height: 96vh;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      /* タイポグラフィ */
+      .date-header {
+        font-size: clamp(1.1rem, 0.6vw + 1rem, 1.4rem);
+        margin: 0 0 1rem;
+        color: #2c2c2e;
+      }
+
+      .weather {
+        font-size: 0.9em;
+        color: #666668;
+        margin-bottom: 0.8rem;
+      }
+
+      .content {
+        font-size: clamp(0.95rem, 0.5vw + 0.9rem, 1.1rem);
+        line-height: 1.7;
+        color: #3a3a3c;
+      }
+
+      .tags {
+        list-style: none;
+        padding: 0;
+        margin: 1.2rem 0 0;
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .tags li {
+        background: #f0f0f5;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85em;
+        color: #4a4a4c;
+      }
+
+      /* 埋め込み用プレースホルダー */
+      .data-source {
+        display: none; /* 後でJavaScriptで埋め込み */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <aside class="timeline-nav">
+        <!-- 年/月フィルタ（JavaScriptで動的生成） -->
+      </aside>
+
+      <main class="diary-grid">
+        <!-- 日記カード（JavaScriptで動的生成） -->
+        <template id="diaryTemplate">
+          <article class="diary-card">
+            <header>
+              <h2 class="date-header"></h2>
+              <div class="weather"></div>
+            </header>
+            <div class="content"></div>
+            <ul class="tags"></ul>
+          </article>
+        </template>
+      </main>
+
+      <aside class="metadata-panel">
+        <!-- タグクラウド/検索（JavaScriptで動的生成） -->
+      </aside>
+    </div>
+
+    <!-- 埋め込み用データ（後で挿入） -->
+    <script id="backupData" type="application/json">
+      <!-- ここにバックアップデータを挿入 -->
+    </script>
+
+    <script id="holidays" type="application/json">
+      <!-- ここに祝日データを挿入 -->
+    </script>
+  </body>
+</html>
