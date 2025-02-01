@@ -6,7 +6,6 @@
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😸</text></svg>"
     />
 
-
     <title>年間一行日記</title>
     <style>
       ::selection {
@@ -16,22 +15,25 @@
       body {
         margin: 0;
         padding: 20px;
-        background-color: rgb(252, 249, 245);
+        background-color: rgba(255, 253, 245, 0.788);
+        font-family: serif;
+        color: #530c38;
       }
       table {
         border-collapse: collapse;
         width: 100%;
         max-width: 1200px;
         margin: 0 auto;
+        box-shadow: #cfff82a1 -3px -3px 90px;
       }
       th {
         word-break: keep-all;
         font-size: 20px;
-        letter-spacing: 3px;
+        letter-spacing: 1px;
       }
       th,
       td {
-        border: 1px solid #b2dbb2;
+        border: 1px solid #b2cfdb;
         padding: 8px;
         text-align: left;
       }
@@ -46,9 +48,10 @@
       #yearControl {
         display: flex;
         align-items: center;
-        background-color: #f0f0f0;
+        background-color: #f0f0f080;
         border-radius: 16px;
         padding: 5px;
+        box-shadow: #c4d8e0a1 -3px -3px 16px;
       }
       #yearControl button {
         background-color: transparent;
@@ -65,13 +68,14 @@
       }
 
       .saturday {
-        background-color: #e6f3ff;
+        background-color: #e6feff83;
+        color: ;
       }
       .sunday {
-        background-color: #ffe6f2;
+        background-color: #ffe6f281;
       }
       .holiday {
-        background-color: #ffe6e6;
+        background-color: #ffe6e680;
       }
       .editable {
         min-width: 200px;
@@ -87,16 +91,23 @@
       td:nth-child(2),
       td:nth-child(3) {
         text-align: center;
+
+        font-weight: bold;
       }
       td:nth-child(1) {
-        width: 11vw;
+        width: 10vw;
         font-size: 18px;
       }
       td:nth-child(3) {
         word-break: keep-all;
+        letter-spacing: -2px;
       }
       td:nth-child(4) {
         letter-spacing: -1px;
+        line-height: 29px;
+        font-feature-settings: "palt" 1;
+        font-size: 17px;
+
       }
     </style>
   </head>
@@ -112,10 +123,10 @@
     <table id="diaryTable">
       <thead>
         <tr>
-          <th>日付</th>
-          <th>曜日</th>
-          <th>祝祭日</th>
-          <th>内容</th>
+          <th>何時</th>
+          <th>曜</th>
+          <th>祝祭</th>
+          <th>記述</th>
         </tr>
       </thead>
       <tbody id="diaryBody"></tbody>
