@@ -5,22 +5,33 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😸</text></svg>"
     />
+
+
     <title>年間一行日記</title>
     <style>
+      ::selection {
+        background-color: rgba(255, 0, 106, 0.3);
+        text-shadow: 2px 3px 9px #9e2c72;
+      }
       body {
-        font-family: Arial, sans-serif;
         margin: 0;
         padding: 20px;
+        background-color: rgb(252, 249, 245);
       }
       table {
         border-collapse: collapse;
         width: 100%;
-        max-width: 800px;
+        max-width: 1200px;
         margin: 0 auto;
+      }
+      th {
+        word-break: keep-all;
+        font-size: 20px;
+        letter-spacing: 3px;
       }
       th,
       td {
-        border: 1px solid #ddd;
+        border: 1px solid #b2dbb2;
         padding: 8px;
         text-align: left;
       }
@@ -36,42 +47,23 @@
         display: flex;
         align-items: center;
         background-color: #f0f0f0;
-        border-radius: 20px;
+        border-radius: 16px;
         padding: 5px;
       }
       #yearControl button {
         background-color: transparent;
         border: none;
-        font-size: 18px;
+        font-size: 20px;
         cursor: pointer;
         padding: 5px 10px;
       }
-      #yearControl.hidden {
-        display: none;
-      }
+
       #currentYear {
-        font-size: 18px;
-        margin: 0 10px;
+        font-size: 32px;
+        margin: 2px 4px;
         cursor: pointer;
       }
 
-
-      .day-toggle {
-        font-size: 18px;
-        line-height: 30px;
-        width: 30px;
-        height: 30px;
-        cursor: pointer;
-        text-align: center;
-        display: inline-block;
-        border-radius: 8px;
-        background-color: #b5dfb7;
-        color: rgb(173, 173, 173);
-      }
-      .day-toggle.active {
-        color: white;
-        background-color: #4caf50;
-      }
       .saturday {
         background-color: #e6f3ff;
       }
@@ -87,55 +79,7 @@
       .hidden {
         display: none;
       }
-      .highlight {
-        background-color: #751322;
-        color: yellow;
-        font-weight: bold;
-      }
 
-      @media screen and (max-width: 600px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
-        }
-        thead tr {
-          position: absolute;
-          top: -9999px;
-          left: -9999px;
-        }
-        tr {
-          margin-bottom: 15px;
-        }
-        td {
-          border: none;
-          position: relative;
-          padding-left: 50%;
-        }
-        td:before {
-          position: absolute;
-          top: 6px;
-          left: 6px;
-          width: 45%;
-          padding-right: 10px;
-          white-space: nowrap;
-        }
-        td:nth-of-type(1):before {
-          content: "日付";
-        }
-        td:nth-of-type(2):before {
-          content: "曜日";
-        }
-        td:nth-of-type(3):before {
-          content: "祝祭日";
-        }
-        td:nth-of-type(4):before {
-          content: "内容";
-        }
-      }
       th {
         text-align: center;
       }
@@ -143,6 +87,16 @@
       td:nth-child(2),
       td:nth-child(3) {
         text-align: center;
+      }
+      td:nth-child(1) {
+        width: 11vw;
+        font-size: 18px;
+      }
+      td:nth-child(3) {
+        word-break: keep-all;
+      }
+      td:nth-child(4) {
+        letter-spacing: -1px;
       }
     </style>
   </head>
@@ -152,15 +106,6 @@
         <button id="prevYear">◀</button>
         <span id="currentYear">2025</span>
         <button id="nextYear">▶</button>
-      </div>
-      <div class="day-filter">
-        <span class="day-toggle active" data-day="0">日</span>
-        <span class="day-toggle active" data-day="1">月</span>
-        <span class="day-toggle active" data-day="2">火</span>
-        <span class="day-toggle active" data-day="3">水</span>
-        <span class="day-toggle active" data-day="4">木</span>
-        <span class="day-toggle active" data-day="5">金</span>
-        <span class="day-toggle active" data-day="6">土</span>
       </div>
     </div>
 
@@ -920,23 +865,6 @@
         a.click();
         loadYear(currentYear);
       }
-
-      // Day Filter Toggle
-      document.querySelectorAll(".day-toggle").forEach((toggle) => {
-        toggle.classList.add("active");
-        toggle.addEventListener("click", function () {
-          this.classList.toggle("active");
-          const day = parseInt(this.dataset.day);
-
-          if (this.classList.contains("active")) {
-            activeDays.add(day);
-          } else {
-            activeDays.delete(day);
-          }
-
-          filterTable();
-        });
-      });
 
       document.addEventListener("DOMContentLoaded", () => {
         loadFromLocalStorage();
