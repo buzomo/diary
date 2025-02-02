@@ -107,7 +107,6 @@
         line-height: 29px;
         font-feature-settings: "palt" 1;
         font-size: 17px;
-
       }
     </style>
   </head>
@@ -796,7 +795,7 @@
       }
       function loadYear(year) {
         currentYear = year;
-        document.getElementById("currentYear").textContent = year;
+
         const table = document.getElementById("diaryBody");
         table.innerHTML = "";
 
@@ -838,6 +837,22 @@
         }
 
         filterTable();
+        const today = new Date();
+        const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+        const todayRow = Array.from(table.getElementsByTagName("tr")).find(
+          (row) => row.cells[0].textContent === todayFormatted
+        );
+        document.getElementById("currentYear").textContent = year;
+        if (todayRow) {
+          todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          todayRow.style.transition = "background-color 1s";
+          todayRow.style.backgroundColor = "#ffeb3b50";
+          setTimeout(() => {
+            todayRow.style.backgroundColor = "";
+          }, 2000);
+        }
       }
 
       document
