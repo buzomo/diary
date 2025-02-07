@@ -40,7 +40,6 @@ function saveToLocalStorage() {
   localStorage.setItem("diaryData", JSON.stringify(entrydata));
 }
 
-// 以下のコードは変更なし
 function filterTable() {
   const rows = document.querySelectorAll("#diaryBody tr");
   rows.forEach((row) => {
@@ -111,7 +110,7 @@ function loadYear(year) {
     todayRow.style.backgroundColor = "#ffeb3b50";
     setTimeout(() => {
       todayRow.style.backgroundColor = "";
-    }, 2000);
+    }, 200);
   }
 }
 
@@ -124,6 +123,7 @@ document.getElementById("diaryBody").addEventListener("input", (e) => {
     saveToLocalStorage();
   }
 });
+
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.key === "s") {
     e.preventDefault();
@@ -139,10 +139,115 @@ document.addEventListener("keydown", (e) => {
     setTimeout(() => {
       location.href = "https://github.com/buzomo/diary/edit/main/diary.json";
     }, 100);
+  } else if (e.key >= "1" && e.key <= "7") {
+    const dayIndex = parseInt(e.key) - 1;
+    if (activeDays.has(dayIndex)) {
+      activeDays.delete(dayIndex);
+    } else {
+      activeDays.add(dayIndex);
+    }
+    filterTable();
+  } else if (e.key === "Escape") {
+    filterRows(() => true);
+  } else if (e.key ) {
+    const searchContainer = document.getElementById("searchContainer");
+    searchContainer.classList.remove("hidden");
+    const searchInput = document.getElementById("searchInput");
+    searchInput.focus();
   }
 });
+
+function filterRows(predicate) {
+  const rows = document.querySelectorAll("#diaryBody tr");
+  rows.forEach((row) => {
+    if (predicate(row)) {
+      row.classList.remove("hidden");
+    } else {
+      row.classList.add("hidden");
+    }
+  });
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadJSONData();
   loadYear(currentYear);
+
+  const today = new Date();
+  const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+  const todayRow = Array.from(diaryBody.getElementsByTagName("tr")).find(
+    (row) => row.cells[0].textContent === todayFormatted
+  );
+
+  if (todayRow) {
+    todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
+    todayRow.style.transition = "background-color 0.5s";
+    todayRow.style.backgroundColor = "#ffeb3b50";
+    setTimeout(() => {
+      todayRow.style.backgroundColor = "";
+    }, 200);
+
+    todayRow.cells[0].addEventListener("click", () => filterSameDate(today));
+    todayRow.cells[1].addEventListener("click", () => filterSameDay(today));
+  }
+});
+
+function filterSameDate(today) {
+  const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
+  filterRows((row) => {
+    const date = row.cells[0].textContent;
+    const [year, month, day] = date.split("-");
+    return (
+      `${month}-${day}` === todayMonthDay ||
+      row.cells[0].textContent === todayFormatted
+    );
+  });
+}
+
+function filterSameDay(today) {
+  const todayDay = today.getDay();
+  filterRows((row) => {
+    const dayOfWeek = row.cells[1].textContent;
+    const dayIndex = ["月", "火", "水", "木", "金", "土", "日"].indexOf(
+      dayOfWeek
+    );
+    const rowDate = new Date(row.cells[0].textContent);
+    return (
+      (dayIndex === todayDay &&
+        rowDate <= today &&
+        row.cells[3].textContent.trim().length > 0) ||
+      row.cells[0].textContent === todayFormatted
+    );
+  });
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  if (searchTerm === "") {
+    const today = new Date();
+    const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+    const todayRow = Array.from(diaryBody.getElementsByTagName("tr")).find(
+      (row) => row.cells[0].textContent === todayFormatted
+    );
+    if (todayRow) {
+      todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+  filterRows((row) => {
+    const content = row.cells[3].textContent.toLowerCase();
+    if (content.includes(searchTerm)) {
+      row.classList.remove("hidden");
+      row.cells[3].innerHTML = row.cells[3].textContent.replace(
+        new RegExp(searchTerm, "gi"),
+        (match) => `<span class="highlight">${match}</span>`
+      );
+      return true;
+    } else {
+      row.classList.add("hidden");
+      return false;
+    }
+  });
 });

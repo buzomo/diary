@@ -176,3 +176,28 @@ td:nth-child(4) {
     width: 100%; /* テーブルの幅を100%に */
   }
 }
+
+#searchContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+#searchInput {
+  width: 300px;
+  padding: 10px;
+  font-size: 18px;
+  border: 1px solid #ccc;
+  background-color: #ffffff80;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.highlight {
+  background-color: pink;
+  font-weight: bold;
+}
