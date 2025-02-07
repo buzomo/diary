@@ -1,215 +1,157 @@
-// Constants
-const CONFIG = {
-  dayNames: ["日", "月", "火", "水", "木", "金", "土"],
-  defaultActiveDays: new Set([0, 1, 2, 3, 4, 5, 6]),
-  storageKey: "diaryData",
-  urls: {
-    holidays: "holidays.json",
-    diary: "diary.json",
-    githubEdit: "https://github.com/buzomo/diary/edit/main/diary.json"
-  }
-};
+let entrydata = {};
+let holidays = [];
+const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+let currentDate = new Date();
+let currentYear = currentDate.getFullYear();
+let activeDays = new Set([0, 1, 2, 3, 4, 5, 6]);
+const yearControl = document.getElementById("yearControl");
+const diaryBody = document.getElementById("diaryBody");
 
-// State management
-class DiaryState {
-  constructor() {
-    this.entryData = {};
-    this.holidays = [];
-    this.currentYear = new Date().getFullYear();
-    this.activeDays = new Set(CONFIG.defaultActiveDays);
-  }
+async function loadJSONData() {
+  try {
+    const [holidaysResponse, diaryResponse] = await Promise.all([
+      fetch("holidays.json"),
+      fetch("diary.json"),
+    ]);
 
-  async initialize() {
-    await this.loadJSONData();
-  }
+    const [holidaysData, diaryData] = await Promise.all([
+      holidaysResponse.json(),
+      diaryResponse.json(),
+    ]);
 
-  async loadJSONData() {
-    try {
-      const [holidaysData, diaryData] = await Promise.all([
-        this.fetchJSON(CONFIG.urls.holidays),
-        this.fetchJSON(CONFIG.urls.diary)
-      ]);
+    holidays = holidaysData.holidays;
 
-      this.holidays = holidaysData.holidays;
-      this.mergeAndSaveData(diaryData);
-    } catch (error) {
-      console.error("データの読み込みに失敗:", error);
-    }
-  }
+    // LocalStorageのデータとJSONのデータを統合
+    const savedData = localStorage.getItem("diaryData");
+    entrydata = savedData ? JSON.parse(savedData) : {};
 
-  async fetchJSON(url) {
-    const response = await fetch(url);
-    return await response.json();
-  }
-
-  mergeAndSaveData(diaryData) {
-    const savedData = localStorage.getItem(CONFIG.storageKey);
-    this.entryData = savedData ? JSON.parse(savedData) : {};
-
-    // 既存のデータを優先しつつ、新しいデータを統合
-    Object.entries(diaryData).forEach(([key, value]) => {
-      if (!this.entryData[key] || this.entryData[key] === "") {
-        this.entryData[key] = value;
+    for (let key in diaryData) {
+      if (!entrydata[key] || entrydata[key] === "") {
+        entrydata[key] = diaryData[key];
       }
-    });
+    }
 
-    this.saveToLocalStorage();
-  }
-
-  saveToLocalStorage() {
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify(this.entryData));
-  }
-
-  updateEntry(date, content) {
-    this.entryData[date] = content;
-    this.saveToLocalStorage();
-  }
-
-  setCurrentYear(year) {
-    this.currentYear = year;
+    saveToLocalStorage();
+  } catch (e) {
+    console.error("データの読み込みに失敗", e);
   }
 }
 
-// UI Management
-class DiaryUI {
-  constructor(diaryState) {
-    this.state = diaryState;
-    this.elements = {
-      diaryBody: document.getElementById("diaryBody"),
-      currentYear: document.getElementById("currentYear"),
-      prevYear: document.getElementById("prevYear"),
-      nextYear: document.getElementById("nextYear")
-    };
-    this.setupEventListeners();
-  }
+function saveToLocalStorage() {
+  localStorage.setItem("diaryData", JSON.stringify(entrydata));
+}
 
-  setupEventListeners() {
-    this.elements.prevYear.addEventListener("click", () => 
-      this.loadYear(this.state.currentYear - 1));
-    this.elements.nextYear.addEventListener("click", () => 
-      this.loadYear(this.state.currentYear + 1));
-    this.elements.diaryBody.addEventListener("input", (e) => {
-      if (e.target.className === "editable") {
-        const date = e.target.parentElement.cells[0].textContent;
-        this.state.updateEntry(date, e.target.textContent);
-      }
-    });
+// 以下のコードは変更なし
+function filterTable() {
+  const rows = document.querySelectorAll("#diaryBody tr");
+  rows.forEach((row) => {
+    const dayOfWeek = row.cells[1].textContent;
+    const dayIndex = dayNames.indexOf(dayOfWeek);
+    const contentCell = row.cells[3];
+    const content = contentCell.textContent.toLowerCase();
+    const matchDay = activeDays.has(dayIndex);
 
-    document.addEventListener("keydown", this.handleKeyboardShortcuts.bind(this));
-  }
-
-  async handleKeyboardShortcuts(e) {
-    if (e.ctrlKey && e.key === "s") {
-      e.preventDefault();
-      await this.copyDataAndRedirect();
+    if (matchDay) {
+      row.classList.remove("hidden");
+      contentCell.textContent = contentCell.textContent;
+    } else {
+      row.classList.add("hidden");
     }
-  }
+  });
+}
 
-  async copyDataAndRedirect() {
-    const formattedData = JSON.stringify(this.state.entryData, null, 2);
-    try {
-      await navigator.clipboard.writeText(formattedData);
-      console.log("最新のデータをクリップボードにコピーしました！");
-      setTimeout(() => {
-        location.href = CONFIG.urls.githubEdit;
-      }, 100);
-    } catch (error) {
-      alert("コピーに失敗しました: " + error);
+function loadYear(year) {
+  currentYear = year;
+  const table = document.getElementById("diaryBody");
+  table.innerHTML = "";
+
+  const startDate = new Date(year, 0, 1);
+  const endDate = new Date(year, 11, 31);
+
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const row = table.insertRow();
+    const dateCell = row.insertCell(0);
+    const dayCell = row.insertCell(1);
+    const holidayCell = row.insertCell(2);
+    const contentCell = row.insertCell(3);
+
+    const formattedDate = `${d.getFullYear()}-${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+    dateCell.textContent = formattedDate;
+    dayCell.textContent = dayNames[d.getDay()];
+
+    contentCell.className = "editable";
+    contentCell.contentEditable = true;
+    contentCell.textContent = entrydata[formattedDate] || "";
+
+    if (d.getDay() === 0) {
+      row.classList.add("sunday");
+    } else if (d.getDay() === 6) {
+      row.classList.add("saturday");
     }
-  }
 
-  createTableRow(date) {
-    const row = document.createElement("tr");
-    const formattedDate = this.formatDate(date);
-    // Create cells
-    const dateCell = this.createCell(formattedDate);
-    const dayCell = this.createCell(CONFIG.dayNames[date.getDay()]);
-    const holidayCell = this.createCell();
-    const contentCell = this.createEditableCell(this.state.entryData[formattedDate] || "");
-
-    // Append cells
-    row.append(dateCell, dayCell, holidayCell, contentCell);
-
-    // Apply styling
-    this.applyRowStyling(row, date, formattedDate);
-
-    return row;
-  }
-
-  createCell(content = "") {
-    const cell = document.createElement("td");
-    cell.textContent = content;
-    return cell;
-  }
-
-  createEditableCell(content) {
-    const cell = this.createCell(content);
-    cell.className = "editable";
-    cell.contentEditable = true;
-    return cell;
-  }
-
-  applyRowStyling(row, date, formattedDate) {
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0) row.classList.add("sunday");
-    if (dayOfWeek === 6) row.classList.add("saturday");
-
-    const holiday = this.state.holidays.find(h => h.date === formattedDate);
+    const holiday = holidays.find((h) => h.date === formattedDate);
     if (holiday) {
       row.classList.add("holiday");
-      row.cells[2].textContent = holiday.name;
+      holidayCell.textContent = holiday.name;
     }
   }
 
-  formatDate(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  }
-
-  highlightToday(table) {
-    const todayFormatted = this.formatDate(new Date());
-    const todayRow = Array.from(table.getElementsByTagName("tr"))
-      .find(row => row.cells[0].textContent === todayFormatted);
-
-    if (todayRow) {
-      todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
-      todayRow.style.transition = "background-color 1s";
-      todayRow.style.backgroundColor = "#ffeb3b50";
-      setTimeout(() => {
-        todayRow.style.backgroundColor = "";
-      }, 2000);
-    }
-  }
-
-  loadYear(year) {
-    this.elements.diaryBody.innerHTML = "";
-    this.state.setCurrentYear(year);
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year, 11, 31);
-
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const row = this.createTableRow(d);
-      this.elements.diaryBody.appendChild(row);
-    }
-
-    this.elements.currentYear.textContent = year;
-    this.highlightToday(this.elements.diaryBody);
-    this.filterTable();
-  }
-
-  filterTable() {
-    const rows = this.elements.diaryBody.querySelectorAll("tr");
-    rows.forEach(row => {
-      const dayOfWeek = row.cells[1].textContent;
-      const dayIndex = CONFIG.dayNames.indexOf(dayOfWeek);
-      row.classList.toggle("hidden", !this.state.activeDays.has(dayIndex));
-    });
+  filterTable();
+  const today = new Date();
+  const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+  const todayRow = Array.from(table.getElementsByTagName("tr")).find(
+    (row) => row.cells[0].textContent === todayFormatted
+  );
+  document.getElementById("currentYear").textContent = year;
+  if (todayRow) {
+    todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
+    todayRow.style.transition = "background-color 1s";
+    todayRow.style.backgroundColor = "#ffeb3b50";
+    setTimeout(() => {
+      todayRow.style.backgroundColor = "";
+    }, 2000);
   }
 }
 
-// Application initialization
+document
+  .getElementById("prevYear")
+  .addEventListener("click", () => loadYear(currentYear - 1));
+document
+  .getElementById("nextYear")
+  .addEventListener("click", () => loadYear(currentYear + 1));
+
+document.getElementById("diaryBody").addEventListener("input", (e) => {
+  if (e.target.className === "editable") {
+    const row = e.target.parentElement;
+    const date = row.cells[0].textContent;
+    const content = e.target.textContent;
+    entrydata[date] = content;
+    saveToLocalStorage();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === "s") {
+    e.preventDefault();
+    const dataToCopy = JSON.stringify(entrydata, null, 2); // 第3引数に2を指定してインデントを追加
+    navigator.clipboard
+      .writeText(dataToCopy)
+      .then(() => {
+        console.log("最新のデータをクリップボードにコピーしました！");
+      })
+      .catch((err) => {
+        alert("コピーに失敗しました: " + err);
+      });
+    setTimeout(() => {
+      location.href = "https://github.com/buzomo/diary/edit/main/diary.json";
+    }, 100);
+  }
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
-  const diaryState = new DiaryState();
-  const diaryUI = new DiaryUI(diaryState);
-  await diaryState.initialize();
-  diaryUI.loadYear(diaryState.currentYear);
+  await loadJSONData();
+  loadYear(currentYear);
 });
