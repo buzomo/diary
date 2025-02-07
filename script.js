@@ -64,8 +64,8 @@ function loadYear(year) {
   const table = document.getElementById("diaryBody");
   table.innerHTML = "";
 
-  const startDate = new Date(year-2, 5, 1);
-  const endDate = new Date(year, 11, 31);
+  const startDate = new Date(2024, 5, 1);
+  const endDate = new Date(2031, 11, 31);
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     const row = table.insertRow();
