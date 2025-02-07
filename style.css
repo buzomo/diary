@@ -1,0 +1,133 @@
+::selection {
+  background-color: rgba(255, 0, 106, 0.3);
+  text-shadow: 2px 3px 9px #9e2c72;
+}
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: rgba(255, 253, 245, 0.788);
+  font-family: serif;
+  color: #530c38;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-shadow: #cfff82a1 -3px -3px 90px;
+}
+th {
+  word-break: keep-all;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+th,
+td {
+  border: 1px solid #b2cfdb;
+  padding: 8px;
+  text-align: left;
+}
+#controls {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+#yearControl {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f080;
+  border-radius: 16px;
+  padding: 5px;
+  box-shadow: #c4d8e0a1 -3px -3px 16px;
+}
+#yearControl button {
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+#currentYear {
+  font-size: 20px;
+  margin: 2px 4px;
+  cursor: pointer;
+}
+
+.saturday {
+  background-color: #e6feff83;
+}
+.sunday {
+  background-color: #ffe6f281;
+}
+.holiday {
+  background-color: #ffe6e680;
+}
+.editable {
+  min-width: 200px;
+}
+.hidden {
+  display: none;
+}
+
+th {
+  text-align: center;
+}
+td:nth-child(1),
+td:nth-child(2),
+td:nth-child(3) {
+  text-align: center;
+
+  font-weight: bold;
+}
+td:nth-child(1) {
+  font-size: 18px;
+}
+td:nth-child(3) {
+  word-break: keep-all;
+  letter-spacing: -2px;
+}
+td:nth-child(4) {
+  letter-spacing: -1px;
+  line-height: 29px;
+  font-feature-settings: "palt" 1;
+  font-size: 17px;
+}
+/* メディアクエリを追加 */
+@media (max-width: 650px) {
+  th,
+  td:nth-child(2),
+  td:nth-child(3) {
+    display: none; /* 曜日、祝日を非表示に */
+  }
+
+  td:nth-child(1),
+  td:nth-child(4) {
+    display: block; /* ブロック要素に変更 */
+    width: auto; /* 幅を100%に */
+    border-bottom: none;
+  }
+
+  td:nth-child(1) {
+    order: 1; /* 上段に配置 */
+    width: auto;
+  }
+
+  td:nth-child(4) {
+    order: 2; /* 下段に配置 */
+    font-size: 14px; /* 日記のエントリーを目立たせる */
+    padding: 10px; /* パディングを調整 */
+  }
+
+  tr {
+    display: flex; /* フレックスボックスに変更 */
+    flex-direction: column; /* 縦方向に配置 */
+  }
+
+  table {
+    width: 100%; /* テーブルの幅を100%に */
+  }
+}
