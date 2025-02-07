@@ -203,7 +203,7 @@
     const diaryBody = document.getElementById("diaryBody");
     async function loadFromJSON() {
       try {
-        const response = await fetch('backupData.json');
+        const response = await fetch('diary.json');
         const parsed = await response.json();
         // LocalStorageのデータとJSONのデータを統合
         for (let key in parsed) {
