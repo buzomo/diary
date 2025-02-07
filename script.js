@@ -1,6 +1,5 @@
 let entrydata = {};
 let holidays = [];
-let highlightWords = [];
 const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
@@ -9,21 +8,17 @@ const diaryBody = document.getElementById("diaryBody");
 
 async function loadJSONData() {
   try {
-    const [holidaysResponse, diaryResponse, highlightWordsResponse] =
-      await Promise.all([
-        fetch("holidays.json"),
-        fetch("diary.json"),
-        fetch("highlightWords.json"),
-      ]);
+    const [holidaysResponse, diaryResponse] = await Promise.all([
+      fetch("holidays.json"),
+      fetch("diary.json"),
+    ]);
 
-    const [holidaysData, diaryData, highlightWordsData] = await Promise.all([
+    const [holidaysData, diaryData] = await Promise.all([
       holidaysResponse.json(),
       diaryResponse.json(),
-      highlightWordsResponse.json(),
     ]);
 
     holidays = holidaysData.holidays;
-    highlightWords = highlightWordsData.highlightWords;
 
     const savedData = localStorage.getItem("diaryData");
     entrydata = savedData ? JSON.parse(savedData) : {};
@@ -164,7 +159,9 @@ document.addEventListener("keydown", (e) => {
   } else if (e.key === "Escape") {
     filterRows(() => true);
     document.getElementById("searchInput").value = "";
-  } else if (e.key) {
+  } else if (e.key === "f" && e.ctrlKey) {
+    // Ctrl + Fで検索バーにフォーカス
+    e.preventDefault();
     const searchContainer = document.getElementById("searchContainer");
     searchContainer.classList.remove("hidden");
     const searchInput = document.getElementById("searchInput");
@@ -181,14 +178,6 @@ function filterRows(predicate) {
       row.classList.add("hidden");
     }
   });
-}
-
-function highlightContent(content) {
-  highlightWords.forEach((word) => {
-    const regex = new RegExp(`(${word})`, "gi");
-    content = content.replace(regex, `<span class="highlight">$1</span>`);
-  });
-  return content;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -216,7 +205,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.querySelectorAll(".editable").forEach((cell) => {
-    cell.innerHTML = highlightContent(cell.textContent);
     cell.addEventListener("mouseup", (e) => {
       setTimeout(() => {
         const selection = window.getSelection();
@@ -227,15 +215,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           searchInput.dispatchEvent(new Event("input"));
         }
       }, 300); // 300ミリ秒待機
-    });
-
-    // ハイライトキーワードのクリックイベントを追加
-    cell.addEventListener("click", (e) => {
-      if (e.target.classList.contains("highlight")) {
-        const searchInput = document.getElementById("searchInput");
-        searchInput.value = e.target.textContent;
-        searchInput.dispatchEvent(new Event("input"));
-      }
     });
   });
 });
@@ -269,28 +248,6 @@ function filterSameDay(today) {
   });
 }
 
-document.getElementById("searchInput").addEventListener("keydown", (e) => {
-  const query = e.target.value;
-  if (query.length > 0) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      window.open(
-        "https://search.yahoo.co.jp/realtime/search?p=" +
-          encodeURIComponent(query),
-        null,
-        "width=990,height=1000,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes"
-      );
-    } else if (e.key === "ctrlKey") {
-      e.preventDefault();
-      window.open(
-        "https://www.google.com/search?btnI=I&q=" + encodeURIComponent(query),
-        null,
-        "width=990,height=1000,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=yes"
-      );
-    }
-  }
-});
-
 document.getElementById("searchInput").addEventListener("input", (e) => {
   const searchTerm = e.target.value.toLowerCase();
   if (searchTerm === "") {
@@ -309,10 +266,6 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
     const content = row.cells[3].textContent.toLowerCase();
     if (content.includes(searchTerm)) {
       row.classList.remove("hidden");
-      row.cells[3].innerHTML = row.cells[3].textContent.replace(
-        new RegExp(searchTerm, "gi"),
-        (match) => `<span class="highlight">${match}</span>`
-      );
       return true;
     } else {
       row.classList.add("hidden");
