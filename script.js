@@ -4,7 +4,6 @@ const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
 let activeDays = new Set([0, 1, 2, 3, 4, 5, 6]);
-const yearControl = document.getElementById("yearControl");
 const diaryBody = document.getElementById("diaryBody");
 
 async function loadJSONData() {
@@ -65,7 +64,7 @@ function loadYear(year) {
   const table = document.getElementById("diaryBody");
   table.innerHTML = "";
 
-  const startDate = new Date(year, 0, 1);
+  const startDate = new Date(year-2, 5, 1);
   const endDate = new Date(year, 11, 31);
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -106,23 +105,15 @@ function loadYear(year) {
   const todayRow = Array.from(table.getElementsByTagName("tr")).find(
     (row) => row.cells[0].textContent === todayFormatted
   );
-  document.getElementById("currentYear").textContent = year;
   if (todayRow) {
     todayRow.scrollIntoView({ behavior: "smooth", block: "center" });
-    todayRow.style.transition = "background-color 1s";
+    todayRow.style.transition = "background-color 0.5s";
     todayRow.style.backgroundColor = "#ffeb3b50";
     setTimeout(() => {
       todayRow.style.backgroundColor = "";
     }, 2000);
   }
 }
-
-document
-  .getElementById("prevYear")
-  .addEventListener("click", () => loadYear(currentYear - 1));
-document
-  .getElementById("nextYear")
-  .addEventListener("click", () => loadYear(currentYear + 1));
 
 document.getElementById("diaryBody").addEventListener("input", (e) => {
   if (e.target.className === "editable") {
