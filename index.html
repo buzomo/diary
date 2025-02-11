@@ -297,7 +297,7 @@
             try {
                 let [t, e] = await Promise.all([
                     fetch("https://raw.githubusercontent.com/buzomo/diary/main/holidays.json"),
-                    fetch("https://api.github.com/repos/buzomo/diary/contents/diary.json")
+                    fetch("https://api.github.com/repos/buzomo/diary-data-pub/contents/diary.json")
                 ]),
                 [a, n] = await Promise.all([t.json(), e.json()]);
                 holidays = a.holidays, entrydata = JSON.parse(decodeURIComponent(escape(atob(n.content))));
@@ -373,7 +373,7 @@
             async function getFileSHA() {
                 try {
                     const response = await fetch(
-                        'https://api.github.com/repos/buzomo/diary/contents/diary.json',
+                        'https://api.github.com/repos/buzomo/diary-data-pub/contents/diary.json',
                         {
                             headers: {
                                 'Authorization': `token ${getLocalStorageToken('gh_token')}`,
@@ -397,7 +397,7 @@
                     const sha = await getFileSHA();
                     const formattedContent = JSON.stringify(content, null, 2); // JSON整形
                     const response = await fetch(
-                        'https://api.github.com/repos/buzomo/diary/contents/diary.json',
+                        'https://api.github.com/repos/buzomo/diary-data-pub/contents/diary.json',
                         {
                             method: 'PUT',
                             headers: {
