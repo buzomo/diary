@@ -285,7 +285,8 @@
         <button id="rotatingButton">✨</button>
     </div>
     <script>
-        let entrydata = {}, holidays = [];
+        let entrydata = {};
+        let holidays = [];
         const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
         let currentDate = new Date, currentYear = currentDate.getFullYear();
         const diaryBody = document.getElementById("diaryBody");
@@ -295,11 +296,11 @@
         async function loadJSONData() {
             try {
                 let [t, e] = await Promise.all([
-                    fetch("https://raw.githubusercontent.com/buzomo/diary/refs/heads/main/holidays.json"),
-                    fetch("https://raw.githubusercontent.com/buzomo/diary/refs/heads/main/diary.json")
+                    fetch("https://raw.githubusercontent.com/buzomo/diary/main/holidays.json"),
+                    fetch("https://api.github.com/repos/buzomo/diary/contents/diary.json")
                 ]),
                 [a, n] = await Promise.all([t.json(), e.json()]);
-                holidays = a.holidays, entrydata = n;
+                holidays = a.holidays, entrydata = JSON.parse(decodeURIComponent(escape(atob(n.content))));
             } catch (d) {
                 alert("データの読み込みに失敗 " + d);
             }
