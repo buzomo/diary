@@ -12,8 +12,7 @@
         }
         body {
             margin: 0;
-            padding: 20px;
-            background-color: rgba(255,253,245,.788);
+            padding: 20px 20px 80px; /* 下部に余白を追加 */
             font-family: serif;
             color: #530c38;
         }
@@ -169,6 +168,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            background: rgba(255, 255, 255, 0.268);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-top: 1px solid #ccc;
         }
         #searchInput {
             width: 300px;
@@ -176,7 +179,7 @@
             font-size: 18px;
             border: 1px solid #ccc;
             background-color: #ffffff80;
-            border-radius: 20px;
+            border-radius: 0 20px 20px 0;
             text-align: center;
         }
         .highlight {
@@ -215,13 +218,46 @@
             border: 1px solid #ccc;
             background-color: #f0f0f0;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 20px 0 0 20px;
         }
         #filterButton.active {
             background-color: #d0d0d0;
         }
-        #filterButton:hover {
+        #filterButton.all {
+            background-color: #ffffff;
+        }
+        #filterButton.weekdays {
+            background-color: #ecfae0;
+        }
+        #filterButton.holidays {
+            background-color: #ffebee;
+        }
+        #filterButton.today {
+            background-color: #fff9c4;
+        }
+        #filterButton:hover:not(.active) {
             background-color: #e0e0e0;
+        }
+        #rotatingButton {
+            margin-left: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.5s linear, box-shadow 0.5s linear;
+        }
+        #rotatingButton.rotating {
+            animation: rotate 2s linear infinite;
+            box-shadow: 0 0 10px 5px yellow;
+        }
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
         }
         .highlight {
             background-color: #ffeb3b;
@@ -243,9 +279,10 @@
     </table>
     <div id="searchContainer">
         <div id="filterControls">
-            <button id="filterButton" class="active">全日</button>
+            <button id="filterButton" class="active all">全日</button>
         </div>
         <input type="text" id="searchInput" placeholder="検索...">
+        <button id="rotatingButton">✨</button>
     </div>
     <script>
         let entrydata = {}, holidays = [];
@@ -253,6 +290,7 @@
         let currentDate = new Date, currentYear = currentDate.getFullYear();
         const diaryBody = document.getElementById("diaryBody");
         let currentRequest = null; // ここで定義
+        let rotatingInterval = null;
 
         async function loadJSONData() {
             try {
@@ -282,13 +320,21 @@
                         s = document.createElement("td"),
                         y = document.createElement("td");
                     o.textContent = c;
+                    o.title = `${Math.floor((today - r) / (1000 * 60 * 60 * 24))}日経過`;
                     i.textContent = dayNames[r.getDay()];
                     y.className = "editable";
                     y.contentEditable = !0;
                     y.textContent = entrydata[c] || "";
                     0 === r.getDay() ? l.classList.add("sunday") : 6 === r.getDay() && l.classList.add("saturday");
                     let g = holidays.find(t => t.date === c);
-                    g && (l.classList.add("holiday"), s.textContent = g.name);
+                    if (g) {
+                        l.classList.add("holiday");
+                        s.textContent = g.name;
+                        s.style.cursor = "pointer";
+                        s.addEventListener("click", () => {
+                            window.open(`https://ja.wikipedia.org/wiki/${encodeURIComponent(g.name)}`, "_blank");
+                        });
+                    }
                     l.appendChild(o);
                     l.appendChild(i);
                     l.appendChild(s);
@@ -473,6 +519,7 @@
             loadYear(currentYear);
             AutoSaveManager.init();
             setupFilters();
+            setupRotatingButton();
         });
 
         function setupFilters() {
@@ -483,13 +530,23 @@
                 const currentFilter = filterButton.textContent;
                 if (currentFilter === '全日') {
                     filterButton.textContent = '平日';
+                    filterButton.className = 'weekdays';
                     filterRows('weekdays');
                 } else if (currentFilter === '平日') {
                     filterButton.textContent = '休日';
+                    filterButton.className = 'holidays';
                     filterRows('holidays');
+                } else if (currentFilter === '休日') {
+                    const today = new Date();
+                    const todayDayName = dayNames[today.getDay()];
+                    filterButton.textContent = todayDayName + "曜";
+                    filterButton.className = 'today';
+                    filterRows('today');
                 } else {
                     filterButton.textContent = '全日';
+                    filterButton.className = 'all';
                     filterRows('all');
+                    window.scrollTo(0, document.body.scrollHeight); // 一番下にスクロール
                 }
             });
 
@@ -506,6 +563,8 @@
             const rows = diaryBody.getElementsByTagName('tr');
             const searchInput = document.getElementById('searchInput');
             const searchTerm = searchInput.value.toLowerCase();
+            const today = new Date();
+            const todayDayName = dayNames[today.getDay()];
 
             for (let row of rows) {
                 row.classList.remove('highlight');
@@ -515,6 +574,8 @@
                     showRow = !row.classList.contains('sunday') && !row.classList.contains('saturday') && !row.classList.contains('holiday');
                 } else if (filterType === 'holidays') {
                     showRow = row.classList.contains('sunday') || row.classList.contains('saturday') || row.classList.contains('holiday');
+                } else if (filterType === 'today') {
+                    showRow = row.cells[1].textContent === todayDayName;
                 }
 
                 if (searchTerm && !row.cells[3].textContent.toLowerCase().includes(searchTerm)) {
@@ -536,9 +597,42 @@
                 document.getElementById('filterButton').classList.add('active');
             } else if (filterType === 'holidays') {
                 document.getElementById('filterButton').classList.add('active');
+            } else if (filterType === 'today') {
+                document.getElementById('filterButton').classList.add('active');
             } else {
                 document.getElementById('filterButton').classList.add('active');
             }
+        }
+
+        function setupRotatingButton() {
+            const rotatingButton = document.getElementById('rotatingButton');
+            rotatingButton.addEventListener('click', () => {
+                if (rotatingButton.classList.contains('rotating')) {
+                    clearInterval(rotatingInterval);
+                    rotatingButton.classList.remove('rotating');
+                    document.getElementById('searchInput').value = '';
+                    filterRows('all');
+                } else {
+                    rotatingButton.classList.add('rotating');
+                    const randomWord = getRandomWord();
+                    document.getElementById('searchInput').value = randomWord;
+                    filterRows('search');
+                    rotatingInterval = setInterval(() => {
+                        const randomWord = getRandomWord();
+                        document.getElementById('searchInput').value = randomWord;
+                        filterRows('search');
+                    }, 5000);
+                }
+            });
+        }
+
+        function getRandomWord() {
+            const rows = diaryBody.getElementsByTagName('tr');
+            const randomRow = rows[Math.floor(Math.random() * rows.length)];
+            const content = randomRow.cells[3].textContent;
+            const start = Math.floor(Math.random() * (content.length - 2));
+            const length = Math.floor(Math.random() * 2) + 2;
+            return content.substring(start, start + length);
         }
     </script>
 </body>
