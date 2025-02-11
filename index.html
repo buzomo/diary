@@ -347,7 +347,7 @@
             let m = new Date,
                 p = `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, "0")}-${m.getDate().toString().padStart(2, "0")}`,
                 h = Array.from(e.getElementsByTagName("tr")).find(t => t.cells[0].textContent === p);
-            h && (h.scrollIntoView({ behavior: "smooth", block: "center" }), h.style.transition = "background-color 0.5s", h.style.backgroundColor = "#ffeb3b50", setTimeout(() => { h.style.backgroundColor = "" }, 200));
+            h && (h.scrollIntoView({ behavior: "instant", block: "center" }), h.style.transition = "background-color 0.5s", h.style.backgroundColor = "#ffeb3b50", setTimeout(() => { h.style.backgroundColor = "" }, 200));
         }
 
         if (location.host.startsWith ("127.0.0.1")) {
