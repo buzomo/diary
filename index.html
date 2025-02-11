@@ -168,6 +168,7 @@
             padding: 10px;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
         #searchInput {
             width: 300px;
@@ -204,6 +205,27 @@
             background-color: #f44336;
             color: white;
         }
+        #filterControls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #filterButton {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #filterButton.active {
+            background-color: #d0d0d0;
+        }
+        #filterButton:hover {
+            background-color: #e0e0e0;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+        }
     </style>
 </head>
 <body>
@@ -219,6 +241,12 @@
         </thead>
         <tbody id="diaryBody"></tbody>
     </table>
+    <div id="searchContainer">
+        <div id="filterControls">
+            <button id="filterButton" class="active">全日</button>
+        </div>
+        <input type="text" id="searchInput" placeholder="検索...">
+    </div>
     <script>
         let entrydata = {}, holidays = [];
         const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
@@ -243,26 +271,38 @@
             currentYear = t;
             let e = document.getElementById("diaryBody");
             e.innerHTML = "";
-            let a = new Date(2023, 5, 1),
-                    n = new Date(2031, 11, 31),
-                    d = document.createDocumentFragment();
-            for (let r = new Date(a); r <= n; r.setDate(r.getDate() + 1)) {
-                let l = document.createElement("tr"),
+            let today = new Date(),
+                d = document.createDocumentFragment();
+            for (let r = new Date(2023, 0, 1); r <= today; r.setDate(r.getDate() + 1)) {
+                let c = `${r.getFullYear()}-${(r.getMonth() + 1).toString().padStart(2, "0")}-${r.getDate().toString().padStart(2, "0")}`;
+                if (entrydata[c] || r.getFullYear() === today.getFullYear()) {
+                    let l = document.createElement("tr"),
                         o = document.createElement("td"),
                         i = document.createElement("td"),
                         s = document.createElement("td"),
-                        y = document.createElement("td"),
-                        c = `${r.getFullYear()}-${(r.getMonth() + 1).toString().padStart(2, "0")}-${r.getDate().toString().padStart(2, "0")}`;
-                o.textContent = c, i.textContent = dayNames[r.getDay()], y.className = "editable", y.contentEditable = !0, y.textContent = entrydata[c] || "", 0 === r.getDay() ? l.classList.add("sunday") : 6 === r.getDay() && l.classList.add("saturday");
-                let g = holidays.find(t => t.date === c);
-                g && (l.classList.add("holiday"), s.textContent = g.name), l.appendChild(o), l.appendChild(i), l.appendChild(s), l.appendChild(y), d.appendChild(l);
+                        y = document.createElement("td");
+                    o.textContent = c;
+                    i.textContent = dayNames[r.getDay()];
+                    y.className = "editable";
+                    y.contentEditable = !0;
+                    y.textContent = entrydata[c] || "";
+                    0 === r.getDay() ? l.classList.add("sunday") : 6 === r.getDay() && l.classList.add("saturday");
+                    let g = holidays.find(t => t.date === c);
+                    g && (l.classList.add("holiday"), s.textContent = g.name);
+                    l.appendChild(o);
+                    l.appendChild(i);
+                    l.appendChild(s);
+                    l.appendChild(y);
+                    d.appendChild(l);
+                }
             }
             e.appendChild(d);
             let m = new Date,
-                    p = `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, "0")}-${m.getDate().toString().padStart(2, "0")}`,
-                    h = Array.from(e.getElementsByTagName("tr")).find(t => t.cells[0].textContent === p);
+                p = `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, "0")}-${m.getDate().toString().padStart(2, "0")}`,
+                h = Array.from(e.getElementsByTagName("tr")).find(t => t.cells[0].textContent === p);
             h && (h.scrollIntoView({ behavior: "smooth", block: "center" }), h.style.transition = "background-color 0.5s", h.style.backgroundColor = "#ffeb3b50", setTimeout(() => { h.style.backgroundColor = "" }, 200));
         }
+
         if (location.host.startsWith ("127.0.0.1")) {
             document.title = "【開発用】" + document.title;
         }
@@ -432,7 +472,74 @@
             await loadJSONData();
             loadYear(currentYear);
             AutoSaveManager.init();
+            setupFilters();
         });
+
+        function setupFilters() {
+            const filterButton = document.getElementById('filterButton');
+            const searchInput = document.getElementById('searchInput');
+
+            filterButton.addEventListener('click', () => {
+                const currentFilter = filterButton.textContent;
+                if (currentFilter === '全日') {
+                    filterButton.textContent = '平日';
+                    filterRows('weekdays');
+                } else if (currentFilter === '平日') {
+                    filterButton.textContent = '休日';
+                    filterRows('holidays');
+                } else {
+                    filterButton.textContent = '全日';
+                    filterRows('all');
+                }
+            });
+
+            searchInput.addEventListener('input', () => filterRows('search'));
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    filterRows('all');
+                }
+            });
+        }
+
+        function filterRows(filterType) {
+            const rows = diaryBody.getElementsByTagName('tr');
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.toLowerCase();
+
+            for (let row of rows) {
+                row.classList.remove('highlight');
+                let showRow = true;
+
+                if (filterType === 'weekdays') {
+                    showRow = !row.classList.contains('sunday') && !row.classList.contains('saturday') && !row.classList.contains('holiday');
+                } else if (filterType === 'holidays') {
+                    showRow = row.classList.contains('sunday') || row.classList.contains('saturday') || row.classList.contains('holiday');
+                }
+
+                if (searchTerm && !row.cells[3].textContent.toLowerCase().includes(searchTerm)) {
+                    showRow = false;
+                }
+
+                if (showRow && searchTerm) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    row.cells[3].innerHTML = row.cells[3].textContent.replace(regex, '<span class="highlight">$1</span>');
+                } else {
+                    row.cells[3].innerHTML = row.cells[3].textContent;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            }
+
+            document.querySelectorAll('#filterControls button').forEach(btn => btn.classList.remove('active'));
+            if (filterType === 'weekdays') {
+                document.getElementById('filterButton').classList.add('active');
+            } else if (filterType === 'holidays') {
+                document.getElementById('filterButton').classList.add('active');
+            } else {
+                document.getElementById('filterButton').classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>
