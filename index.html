@@ -297,7 +297,7 @@
             try {
                 let [t, e] = await Promise.all([
                     fetch("https://raw.githubusercontent.com/buzomo/diary/main/holidays.json"),
-                    fetch("https://api.github.com/repos/buzomo/diary-data-pub/contents/diary.json")
+                    fetch("https://raw.githubusercontent.com/buzomo/diary-data-pub/contents/diary.json")
                 ]),
                 [a, n] = await Promise.all([t.json(), e.json()]);
                 holidays = a.holidays, entrydata = JSON.parse(decodeURIComponent(escape(atob(n.content))));
